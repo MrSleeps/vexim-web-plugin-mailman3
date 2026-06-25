@@ -2,24 +2,21 @@
 
 namespace VEximweb\Plugin\VEximMailman3\Repositories;
 
-use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
-use VEximweb\Plugin\VEximMailman3\Repositories\Interfaces\MailmanListRepositoryInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
+use VEximweb\Plugin\VEximMailman3\Repositories\Interfaces\MailmanListRepositoryInterface;
 
 class MailmanListRepository implements MailmanListRepositoryInterface
 {
-    /**
-     * @var MailmanList
-     */
     protected MailmanList $model;
 
     /**
      * MailmanListRepository constructor.
-     *
-     * @param MailmanList $model
      */
     public function __construct(MailmanList $model)
     {
@@ -98,11 +95,11 @@ class MailmanListRepository implements MailmanListRepositoryInterface
     public function create(array $data): MailmanList
     {
         $list = $this->model->create($data);
-        
+
         Log::info('Mailman list created', [
             'list_id' => $list->list_id,
             'list_email' => $list->list_email,
-            'domain_id' => $list->domain_id
+            'domain_id' => $list->domain_id,
         ]);
 
         return $list;
@@ -118,7 +115,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
 
         Log::info('Mailman list updated', [
             'list_id' => $list->list_id,
-            'list_email' => $list->list_email
+            'list_email' => $list->list_email,
         ]);
 
         return $list->fresh();
@@ -134,7 +131,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
 
         Log::info('Mailman list deleted (soft)', [
             'list_id' => $list->list_id,
-            'list_email' => $list->list_email
+            'list_email' => $list->list_email,
         ]);
 
         return $deleted;
@@ -150,7 +147,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
 
         Log::info('Mailman list force deleted (permanent)', [
             'list_id' => $list->list_id,
-            'list_email' => $list->list_email
+            'list_email' => $list->list_email,
         ]);
 
         return $deleted;
@@ -164,12 +161,12 @@ class MailmanListRepository implements MailmanListRepositoryInterface
         $list = $this->model
             ->withTrashed()
             ->findOrFail($listId);
-        
+
         $restored = $list->restore();
 
         Log::info('Mailman list restored', [
             'list_id' => $list->list_id,
-            'list_email' => $list->list_email
+            'list_email' => $list->list_email,
         ]);
 
         return $restored;
@@ -181,6 +178,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
     public function enable(int $listId): bool
     {
         $list = $this->findOrFail($listId);
+
         return $list->update(['enabled' => true]);
     }
 
@@ -190,6 +188,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
     public function disable(int $listId): bool
     {
         $list = $this->findOrFail($listId);
+
         return $list->update(['enabled' => false]);
     }
 
@@ -252,7 +251,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
                 // Create or update lists
                 foreach ($mailmanLists as $mailmanList) {
                     $existing = $this->findByEmail($mailmanList['list_email']);
-                    
+
                     if ($existing) {
                         // Update existing
                         $this->update($existing->list_id, [
@@ -277,14 +276,14 @@ class MailmanListRepository implements MailmanListRepositoryInterface
 
             Log::info('Mailman sync completed', [
                 'domain_id' => $domainId,
-                'results' => $results
+                'results' => $results,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Mailman sync failed', [
                 'domain_id' => $domainId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             $results['errors']++;
         }
@@ -302,7 +301,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
             ->enabled()
             ->first();
 
-        if (!$list) {
+        if (! $list) {
             return null;
         }
 
@@ -317,9 +316,7 @@ class MailmanListRepository implements MailmanListRepositoryInterface
     /**
      * Find a list or fail.
      *
-     * @param int $listId
-     * @return MailmanList
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     protected function findOrFail(int $listId): MailmanList
     {
@@ -329,9 +326,8 @@ class MailmanListRepository implements MailmanListRepositoryInterface
     /**
      * Apply filters to the query.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array<string, mixed> $filters
-     * @return void
+     * @param  Builder  $query
+     * @param  array<string, mixed>  $filters
      */
     protected function applyFilters($query, array $filters): void
     {
@@ -351,8 +347,8 @@ class MailmanListRepository implements MailmanListRepositoryInterface
             $search = '%' . $filters['search'] . '%';
             $query->where(function ($q) use ($search) {
                 $q->where('list_name', 'like', $search)
-                  ->orWhere('list_email', 'like', $search)
-                  ->orWhere('mailman_list_id', 'like', $search);
+                    ->orWhere('list_email', 'like', $search)
+                    ->orWhere('mailman_list_id', 'like', $search);
             });
         }
 

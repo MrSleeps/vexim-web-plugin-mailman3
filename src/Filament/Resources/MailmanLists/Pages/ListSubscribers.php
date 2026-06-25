@@ -2,7 +2,6 @@
 
 namespace VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Pages;
 
-use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
 use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\Resources\Pages\Page;
@@ -12,6 +11,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\MailmanListResource;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Tables\SubscribersTable;
+use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
 
 class ListSubscribers extends Page implements HasTable
 {

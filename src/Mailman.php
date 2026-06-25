@@ -8,9 +8,13 @@ use GuzzleHttp\Exception\ClientException;
 class Mailman implements MailmanInterface
 {
     protected Client $client;
+
     protected string $host;
+
     protected string $port;
+
     protected string $username;
+
     protected string $password;
 
     public function __construct(string $host, string $port, string $username, string $password)
@@ -39,6 +43,7 @@ class Mailman implements MailmanInterface
         if (preg_match('/\/users\/([0-9]+)/', $selfLink, $matches)) {
             return $matches[1];
         }
+
         return null;
     }
 
@@ -49,6 +54,7 @@ class Mailman implements MailmanInterface
     {
         $response = $this->client->get('3.0/domains');
         $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
+
         return $data['entries'] ?? [];
     }
 
@@ -59,6 +65,7 @@ class Mailman implements MailmanInterface
     {
         try {
             $response = $this->client->get("3.0/domains/{$mailHost}");
+
             return $response->getStatusCode() === 200;
         } catch (\Exception $e) {
             return false;
@@ -71,14 +78,15 @@ class Mailman implements MailmanInterface
     public function createDomain(string $mailHost, string $description = '', array $owners = []): bool
     {
         $payload = ['mail_host' => $mailHost];
-        if (!empty($description)) {
+        if (! empty($description)) {
             $payload['description'] = $description;
         }
-        if (!empty($owners)) {
+        if (! empty($owners)) {
             $payload['owners'] = $owners;
         }
 
         $response = $this->client->post('3.0/domains', ['json' => $payload]);
+
         return $response->getStatusCode() === 201;
     }
 
@@ -90,6 +98,7 @@ class Mailman implements MailmanInterface
         if ($this->domainExists($mailHost)) {
             return true;
         }
+
         return $this->createDomain($mailHost, $description);
     }
 
@@ -100,6 +109,7 @@ class Mailman implements MailmanInterface
     {
         $response = $this->client->get("3.0/domains/{$mailHost}/lists");
         $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
+
         return $data['entries'] ?? [];
     }
 
@@ -111,19 +121,20 @@ class Mailman implements MailmanInterface
         try {
             $response = $this->client->get("3.0/lists/{$list_name}/roster/member");
             $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
-            
+
             $entries = $data['entries'] ?? [];
-            
+
             // Enhance member data with user display names if available
             foreach ($entries as &$entry) {
                 // Keep member_id as string (it can be a large number)
                 if (isset($entry['member_id'])) {
                     $entry['member_id'] = (string) $entry['member_id'];
                 }
-                
+
                 // Fetch user details to get proper display_name
                 if (isset($entry['user_id'])) {
                     $userId = (string) $entry['user_id'];
+
                     try {
                         $userResponse = $this->client->get("3.0/users/{$userId}");
                         $userData = json_decode($userResponse->getBody(), true);
@@ -135,14 +146,16 @@ class Mailman implements MailmanInterface
                     }
                 }
             }
-            
+
             \Log::debug('Mailman Members: ' . json_encode($entries));
+
             return $entries;
         } catch (\Exception $e) {
             \Log::error('Failed to get members', [
                 'list' => $list_name,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -154,6 +167,7 @@ class Mailman implements MailmanInterface
     {
         $response = $this->client->get('3.0/lists');
         $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
+
         return $data['entries'] ?? [];
     }
 
@@ -162,7 +176,7 @@ class Mailman implements MailmanInterface
      */
     public function create_list($fqdn_listname, array $options = []): bool
     {
-        if (empty($fqdn_listname) || !str_contains($fqdn_listname, '@')) {
+        if (empty($fqdn_listname) || ! str_contains($fqdn_listname, '@')) {
             throw new \Exception('Invalid email address format: ' . $fqdn_listname);
         }
 
@@ -173,19 +187,20 @@ class Mailman implements MailmanInterface
         }
 
         $domainCreated = $this->ensureDomain($mail_host, $options['domain_description'] ?? '');
-        if (!$domainCreated) {
+        if (! $domainCreated) {
             throw new \Exception('Failed to create or verify domain: ' . $mail_host);
         }
 
         $payload = ['fqdn_listname' => $fqdn_listname];
-        if (!empty($options['owners'])) {
+        if (! empty($options['owners'])) {
             $payload['owners'] = $options['owners'];
         }
-        if (!empty($options['style_name'])) {
+        if (! empty($options['style_name'])) {
             $payload['style_name'] = $options['style_name'];
         }
 
         $response = $this->client->post('3.0/lists', ['json' => $payload]);
+
         return $response->getStatusCode() === 201;
     }
 
@@ -195,6 +210,7 @@ class Mailman implements MailmanInterface
     public function update_list($list, $options): bool
     {
         $response = $this->client->patch("3.0/lists/{$list}", ['json' => $options]);
+
         return $response->getStatusCode() === 200;
     }
 
@@ -204,6 +220,7 @@ class Mailman implements MailmanInterface
     public function remove_list($name): bool
     {
         $response = $this->client->delete("3.0/lists/{$name}");
+
         return $response->getStatusCode() === 204;
     }
 
@@ -216,23 +233,24 @@ class Mailman implements MailmanInterface
             \Log::info('Starting subscription', [
                 'list' => $list_name,
                 'email' => $user_email,
-                'display_name' => $user_name
+                'display_name' => $user_name,
             ]);
 
             // First, check if user exists and get or create user with proper display name
             $userId = $this->getOrCreateUserWithDisplayName($user_email, $user_name);
-            
-            if (!$userId) {
+
+            if (! $userId) {
                 \Log::error('Failed to get or create user', [
                     'email' => $user_email,
-                    'display_name' => $user_name
+                    'display_name' => $user_name,
                 ]);
+
                 return false;
             }
 
             \Log::info('User ID found/created', [
                 'user_id' => $userId,
-                'email' => $user_email
+                'email' => $user_email,
             ]);
 
             // Now subscribe the user to the list using the user ID
@@ -245,83 +263,85 @@ class Mailman implements MailmanInterface
             ];
 
             $response = $this->client->post('3.0/members', ['json' => $payload]);
-            
+
             $success = in_array($response->getStatusCode(), [201, 204]);
-            
+
             if ($success) {
                 \Log::info('User subscribed successfully', [
                     'list' => $list_name,
                     'email' => $user_email,
                     'display_name' => $user_name,
-                    'user_id' => $userId
+                    'user_id' => $userId,
                 ]);
             }
-            
+
             return $success;
-            
+
         } catch (ClientException $e) {
             $status = $e->getResponse()->getStatusCode();
-            
+
             if ($status === 409) {
                 // User already subscribed - just update display name
                 \Log::info('User already subscribed, updating display name', [
                     'email' => $user_email,
-                    'display_name' => $user_name
+                    'display_name' => $user_name,
                 ]);
+
                 return $this->updateUserDisplayName($user_email, $user_name);
             }
-            
+
             \Log::error('Subscription failed', [
                 'list' => $list_name,
                 'email' => $user_email,
                 'error' => $e->getMessage(),
-                'status' => $status
+                'status' => $status,
             ]);
-            
+
             throw new \Exception('Failed to subscribe user: ' . $e->getMessage(), $status, $e);
         } catch (\Exception $e) {
             \Log::error('Subscription failed with exception', [
                 'list' => $list_name,
                 'email' => $user_email,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
 
     /**
      * Get or create a user with proper display name
-     * 
+     *
      * Returns user_id as string to handle 128-bit integers
      */
     protected function getOrCreateUserWithDisplayName(string $email, string $displayName): ?string
     {
         try {
             // Search for existing user - IMPORTANT: Use JSON_BIGINT_AS_STRING to preserve full integer
-            $response = $this->client->get("3.0/users", [
-                'query' => ['email' => $email]
+            $response = $this->client->get('3.0/users', [
+                'query' => ['email' => $email],
             ]);
             $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
-            
+
             \Log::debug('User search response', [
                 'email' => $email,
-                'response' => $data
+                'response' => $data,
             ]);
-            
-            if (!empty($data['entries'])) {
+
+            if (! empty($data['entries'])) {
                 $user = $data['entries'][0];
-                
+
                 // ALWAYS extract user_id from self_link to get the full number
                 $userId = null;
                 if (isset($user['self_link'])) {
                     $userId = $this->extractUserIdFromSelfLink($user['self_link']);
                 }
-                
+
                 // Fallback to user_id if self_link extraction fails
-                if (!$userId && isset($user['user_id'])) {
+                if (! $userId && isset($user['user_id'])) {
                     $userId = (string) $user['user_id'];
                 }
-                
+
                 if ($userId) {
                     // Check if display name needs updating
                     $currentDisplayName = $user['display_name'] ?? '';
@@ -330,100 +350,103 @@ class Mailman implements MailmanInterface
                         'email' => $email,
                         'current_display_name' => $currentDisplayName,
                         'new_display_name' => $displayName,
-                        'self_link' => $user['self_link'] ?? null
+                        'self_link' => $user['self_link'] ?? null,
                     ]);
-                    
+
                     if ($currentDisplayName !== $displayName) {
                         // Update display name using PATCH
                         \Log::info('Updating display name', [
                             'user_id' => $userId,
                             'old_name' => $currentDisplayName,
-                            'new_name' => $displayName
+                            'new_name' => $displayName,
                         ]);
-                        
+
                         $patchResponse = $this->client->patch("3.0/users/{$userId}", [
-                            'json' => ['display_name' => $displayName]
+                            'json' => ['display_name' => $displayName],
                         ]);
-                        
+
                         $patchSuccess = $patchResponse->getStatusCode() === 204;
-                        
+
                         if ($patchSuccess) {
                             \Log::info('Successfully updated user display name', [
                                 'user_id' => $userId,
                                 'email' => $email,
                                 'old_name' => $currentDisplayName,
-                                'new_name' => $displayName
+                                'new_name' => $displayName,
                             ]);
                         } else {
                             \Log::warning('Failed to update user display name', [
                                 'user_id' => $userId,
                                 'status' => $patchResponse->getStatusCode(),
-                                'response' => (string) $patchResponse->getBody()
+                                'response' => (string) $patchResponse->getBody(),
                             ]);
                         }
                     } else {
                         \Log::info('Display name already matches', [
                             'user_id' => $userId,
-                            'display_name' => $displayName
+                            'display_name' => $displayName,
                         ]);
                     }
+
                     return $userId;
                 }
             }
-            
+
             // Create new user
             \Log::info('Creating new user', [
                 'email' => $email,
-                'display_name' => $displayName
+                'display_name' => $displayName,
             ]);
-            
+
             $payload = [
                 'email' => $email,
                 'display_name' => $displayName,
             ];
-            
+
             $response = $this->client->post('3.0/users', ['json' => $payload]);
-            
+
             if ($response->getStatusCode() === 201) {
                 $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
-                
+
                 // ALWAYS extract user_id from self_link
                 $userId = null;
                 if (isset($data['self_link'])) {
                     $userId = $this->extractUserIdFromSelfLink($data['self_link']);
                 }
-                
+
                 // Fallback to user_id if self_link extraction fails
-                if (!$userId && isset($data['user_id'])) {
+                if (! $userId && isset($data['user_id'])) {
                     $userId = (string) $data['user_id'];
                 }
-                
+
                 if ($userId) {
                     \Log::info('Created new user successfully', [
                         'user_id' => $userId,
                         'email' => $email,
                         'display_name' => $displayName,
-                        'self_link' => $data['self_link'] ?? null
+                        'self_link' => $data['self_link'] ?? null,
                     ]);
+
                     return $userId;
                 }
             }
-            
+
             \Log::warning('Failed to create user', [
                 'email' => $email,
                 'status' => $response->getStatusCode(),
-                'response' => (string) $response->getBody()
+                'response' => (string) $response->getBody(),
             ]);
-            
+
             return null;
-            
+
         } catch (\Exception $e) {
             \Log::error('Failed to get or create user', [
                 'email' => $email,
                 'display_name' => $displayName,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return null;
         }
     }
@@ -444,26 +467,27 @@ class Mailman implements MailmanInterface
     {
         \Log::info('Attempting to update user display name', [
             'email' => $email,
-            'display_name' => $displayName
+            'display_name' => $displayName,
         ]);
 
         // Find the user by email
         $userId = $this->findUserIdByEmail($email);
 
-        if (!$userId) {
+        if (! $userId) {
             \Log::warning('User not found for display name update', ['email' => $email]);
+
             return false;
         }
 
         \Log::info('Found user for display name update', [
             'user_id' => $userId,
-            'email' => $email
+            'email' => $email,
         ]);
 
         try {
             // Update the display name using PATCH
             $response = $this->client->patch("3.0/users/{$userId}", [
-                'json' => ['display_name' => $displayName]
+                'json' => ['display_name' => $displayName],
             ]);
 
             $success = $response->getStatusCode() === 204;
@@ -472,8 +496,9 @@ class Mailman implements MailmanInterface
                 \Log::info('Successfully updated user display name', [
                     'user_id' => $userId,
                     'email' => $email,
-                    'display_name' => $displayName
+                    'display_name' => $displayName,
                 ]);
+
                 return true;
             }
 
@@ -483,7 +508,7 @@ class Mailman implements MailmanInterface
             \Log::warning('Unexpected status updating user display name', [
                 'user_id' => $userId,
                 'status' => $response->getStatusCode(),
-                'response' => (string) $response->getBody()
+                'response' => (string) $response->getBody(),
             ]);
 
             throw new \Exception(
@@ -498,7 +523,7 @@ class Mailman implements MailmanInterface
                 'user_id' => $userId,
                 'display_name' => $displayName,
                 'status' => $status,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             throw new \Exception(
@@ -511,53 +536,54 @@ class Mailman implements MailmanInterface
 
     /**
      * Find a user ID by email address
-     * 
+     *
      * Returns user_id as string to handle 128-bit integers
      */
     protected function findUserIdByEmail(string $email): ?string
     {
         try {
-            $response = $this->client->get("3.0/users", [
-                'query' => ['email' => $email]
+            $response = $this->client->get('3.0/users', [
+                'query' => ['email' => $email],
             ]);
-            
+
             $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
-            
+
             \Log::debug('findUserIdByEmail response', [
                 'email' => $email,
-                'response' => $data
+                'response' => $data,
             ]);
-            
-            if (!empty($data['entries'])) {
+
+            if (! empty($data['entries'])) {
                 $user = $data['entries'][0];
-                
+
                 // ALWAYS extract user_id from self_link to get the full number
                 $userId = null;
                 if (isset($user['self_link'])) {
                     $userId = $this->extractUserIdFromSelfLink($user['self_link']);
                 }
-                
+
                 // Fallback to user_id if self_link extraction fails
-                if (!$userId && isset($user['user_id'])) {
+                if (! $userId && isset($user['user_id'])) {
                     $userId = (string) $user['user_id'];
                 }
-                
+
                 \Log::debug('findUserIdByEmail result', [
                     'email' => $email,
                     'user_id' => $userId,
-                    'self_link' => $user['self_link'] ?? null
+                    'self_link' => $user['self_link'] ?? null,
                 ]);
-                
+
                 return $userId;
             }
-            
+
             return null;
-            
+
         } catch (\Exception $e) {
             \Log::error('Failed to find user by email', [
                 'email' => $email,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -582,12 +608,14 @@ class Mailman implements MailmanInterface
             ];
 
             $response = $this->client->post('3.0/members', ['json' => $payload]);
+
             return in_array($response->getStatusCode(), [201, 204]);
-            
+
         } catch (ClientException $e) {
             if ($e->getResponse()->getStatusCode() === 409) {
                 return true;
             }
+
             throw $e;
         }
     }
@@ -600,17 +628,18 @@ class Mailman implements MailmanInterface
     {
         try {
             $response = $this->client->patch("3.0/users/{$userId}", [
-                'json' => ['display_name' => $displayName]
+                'json' => ['display_name' => $displayName],
             ]);
 
             return $response->getStatusCode() === 204;
-            
+
         } catch (\Exception $e) {
             \Log::error('Failed to update user display name by ID', [
                 'user_id' => $userId,
                 'display_name' => $displayName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -632,27 +661,31 @@ class Mailman implements MailmanInterface
                             \Log::info('User unsubscribed', [
                                 'list' => $list_name,
                                 'email' => $user_email,
-                                'member_id' => $memberId
+                                'member_id' => $memberId,
                             ]);
+
                             return true;
                         }
                     }
                 }
             }
-            
+
             // If not found in members, try the direct endpoint
             $encodedEmail = rawurlencode($user_email);
             $response = $this->client->delete("3.0/lists/{$list_name}/members/{$encodedEmail}");
+
             return $response->getStatusCode() === 204;
-            
+
         } catch (ClientException $e) {
             if ($e->getResponse()->getStatusCode() === 404) {
                 \Log::warning('User not found for unsubscribe', [
                     'list' => $list_name,
-                    'email' => $user_email
+                    'email' => $user_email,
                 ]);
+
                 return false;
             }
+
             throw $e;
         }
     }
@@ -664,6 +697,7 @@ class Mailman implements MailmanInterface
     {
         $response = $this->client->get("3.0/members/{$user}/lists");
         $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
+
         return $data['entries'] ?? [];
     }
 
@@ -674,12 +708,14 @@ class Mailman implements MailmanInterface
     {
         try {
             $response = $this->client->get("3.0/lists/{$listName}/config");
+
             return json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
         } catch (\Exception $e) {
             \Log::error('Failed to fetch list config', [
                 'list' => $listName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -691,12 +727,14 @@ class Mailman implements MailmanInterface
     {
         try {
             $response = $this->client->patch("3.0/lists/{$listName}/config", ['json' => $config]);
+
             return $response->getStatusCode() === 204;
         } catch (\Exception $e) {
             \Log::error('Failed to update list config', [
                 'list' => $listName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -709,6 +747,7 @@ class Mailman implements MailmanInterface
         try {
             $response = $this->client->get("3.0/lists/{$listName}/config/{$key}");
             $data = json_decode($response->getBody(), true, 512, JSON_BIGINT_AS_STRING);
+
             return $data[$key] ?? null;
         } catch (\Exception $e) {
             return null;

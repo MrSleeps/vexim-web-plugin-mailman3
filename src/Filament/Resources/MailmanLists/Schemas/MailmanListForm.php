@@ -19,6 +19,7 @@ class SubscribersTable
             ->records(function () use ($listId) {
                 try {
                     $mailman = app(MailmanInterface::class);
+
                     return collect($mailman->members($listId));
                 } catch (\Throwable $e) {
                     $message = $e->getMessage();
@@ -215,7 +216,7 @@ class SubscribersTable
                                     // Fallback: unsubscribe and resubscribe with new name
                                     $mailman->unsubscribe($listId, $record['email']);
                                     $mailman->subscribe($listId, $data['display_name'], $data['email']);
-                                    $message = "User re-subscribed with updated name";
+                                    $message = 'User re-subscribed with updated name';
                                 }
                             }
 

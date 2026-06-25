@@ -4,7 +4,6 @@
 
 namespace VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists;
 
-use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -18,6 +17,7 @@ use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Pages\ListMail
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Pages\ListSubscribers;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Schemas\MailmanListForm;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Tables\MailmanListsTable;
+use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
 
 class MailmanListResource extends Resource
 {

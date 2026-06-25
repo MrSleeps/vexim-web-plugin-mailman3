@@ -2,13 +2,13 @@
 
 namespace VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Pages;
 
-use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use VEximweb\Plugin\VEximMailman3\Facades\VEximMailman3;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\MailmanListResource;
+use VEximweb\Plugin\VEximMailman3\Models\MailmanList;
 
 class ListMailmanLists extends ListRecords
 {

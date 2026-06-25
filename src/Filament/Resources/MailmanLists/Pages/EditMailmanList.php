@@ -2,7 +2,6 @@
 
 namespace VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Pages;
 
-use VEximweb\Core\Data\Models\Domain;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
@@ -15,6 +14,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
+use VEximweb\Core\Data\Models\Domain;
 use VEximweb\Plugin\VEximMailman3\Facades\VEximMailman3;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\MailmanListResource;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Schemas\MailmanListForm;

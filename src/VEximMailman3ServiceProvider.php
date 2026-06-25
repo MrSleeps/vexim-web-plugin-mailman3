@@ -2,8 +2,6 @@
 
 namespace VEximweb\Plugin\VEximMailman3;
 
-use VEximweb\Plugin\VEximMailman3\Repositories\Interfaces\MailmanListRepositoryInterface;
-use VEximweb\Plugin\VEximMailman3\Repositories\MailmanListRepository;
 use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\Support\Assets\Asset;
@@ -15,8 +13,9 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use VEximweb\Plugin\VEximMailman3\Commands\TestMailmanConnection;
-use VEximweb\Plugin\VEximMailman3\Commands\VEximMailman3Command;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\MailmanListResource;
+use VEximweb\Plugin\VEximMailman3\Repositories\Interfaces\MailmanListRepositoryInterface;
+use VEximweb\Plugin\VEximMailman3\Repositories\MailmanListRepository;
 use VEximweb\Plugin\VEximMailman3\Testing\TestsVEximMailman3;
 
 class VEximMailman3ServiceProvider extends PackageServiceProvider
@@ -74,10 +73,10 @@ class VEximMailman3ServiceProvider extends PackageServiceProvider
                 $app->make(MailmanListRepositoryInterface::class)
             );
         });
-        
+
         Panel::configureUsing(function (Panel $panel) {
             $panel->plugin(VEximMailman3Plugin::make());
-        });        
+        });
     }
 
     public function packageBooted(): void

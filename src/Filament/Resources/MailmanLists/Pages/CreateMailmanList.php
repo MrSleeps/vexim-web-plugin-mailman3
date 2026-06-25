@@ -2,9 +2,9 @@
 
 namespace VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\Pages;
 
-use VEximweb\Core\Data\Models\Domain;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use VEximweb\Core\Data\Models\Domain;
 use VEximweb\Plugin\VEximMailman3\Facades\VEximMailman3;
 use VEximweb\Plugin\VEximMailman3\Filament\Resources\MailmanLists\MailmanListResource;
 
